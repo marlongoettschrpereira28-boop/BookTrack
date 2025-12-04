@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react';
 
-// Componentes
+// ==================== COMPONENTES ====================
 function Container({ children }) {
   return <div className="max-w-6xl mx-auto p-6">{children}</div>;
 }
@@ -28,14 +28,32 @@ function Modal({ isOpen, onClose, children }) {
           <h3 className="text-xl font-bold">Adicionar Livro</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
-        <div className="p-4">
-          {children}
-        </div>
+        <div className="p-4">{children}</div>
       </div>
     </div>
   );
 }
 
+function FilterButton({ active, onClick, children, colorClass }) {
+  const baseClass = "px-4 py-2 rounded-lg text-sm font-medium transition-colors";
+  const activeClass = active ? colorClass : "bg-gray-200 text-gray-700 hover:bg-gray-300";
+  
+  return (
+    <button onClick={onClick} className={`${baseClass} ${activeClass}`}>
+      {children}
+    </button>
+  );
+}
+
+// ==================== CONSTANTES ====================
+const STATUS_CONFIG = {
+  pretendo_ler: { label: 'Pretendo Ler', color: 'bg-yellow-100 text-yellow-800', activeColor: 'bg-yellow-500 text-white' },
+  lendo: { label: 'Lendo', color: 'bg-blue-100 text-blue-800', activeColor: 'bg-blue-600 text-white' },
+  lido: { label: 'Lido', color: 'bg-green-100 text-green-800', activeColor: 'bg-green-600 text-white' },
+  abandonado: { label: 'Abandonado', color: 'bg-gray-100 text-gray-800', activeColor: 'bg-gray-600 text-white' }
+};
+
+// ==================== COMPONENTE PRINCIPAL ====================
 export default function Home() {
   const [books, setBooks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,24 +61,19 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('todas');
+  const [selectedStatus, setSelectedStatus] = useState('todos');
 
-  // Carregar livros do banco
-  useEffect(() => {
-    loadBooks();
-  }, []);
+  useEffect(() => { loadBooks(); }, []);
 
+  // ==================== API FUNCTIONS ====================
   const loadBooks = async () => {
     try {
       const response = await fetch('/api/livros');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error('Resposta não é JSON:', text);
+      if (!contentType?.includes("application/json")) {
         throw new Error('Resposta da API não é JSON');
       }
       
@@ -87,14 +100,14 @@ export default function Home() {
     } catch (error) {
       console.error('Erro ao buscar livros:', error);
       setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
-    setIsSearching(false);
   };
 
   const addBook = async (bookData) => {
     try {
       const volumeInfo = bookData.volumeInfo;
-      
       const newBook = {
         titulo: volumeInfo.title,
         autor: volumeInfo.authors?.join(', ') || 'Autor desconhecido',
@@ -103,7 +116,7 @@ export default function Home() {
         genero: volumeInfo.categories?.[0] || null,
         capa_url: volumeInfo.imageLinks?.thumbnail || null,
         descricao: volumeInfo.description || null,
-        estado: 'lendo',
+        estado: 'pretendo_ler',
         pagina_atual: 0
       };
       
@@ -113,11 +126,7 @@ export default function Home() {
         body: JSON.stringify(newBook)
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erro na resposta:', errorText);
-        throw new Error(`Erro ao adicionar livro: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Erro ao adicionar livro: ${response.status}`);
       
       await loadBooks();
       setIsModalOpen(false);
@@ -129,45 +138,18 @@ export default function Home() {
     }
   };
 
-  const updateBookStatus = async (id, estado) => {
+  const updateBook = async (id, updates) => {
     try {
       const book = books.find(b => b.id === id);
-      
       const response = await fetch(`/api/livros/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          estado,
-          pagina_atual: book.pagina_atual
-        })
+        body: JSON.stringify({ ...book, ...updates })
       });
       
-      if (response.ok) {
-        await loadBooks();
-      }
+      if (response.ok) await loadBooks();
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-    }
-  };
-
-  const updateBookPage = async (id, pagina_atual) => {
-    try {
-      const book = books.find(b => b.id === id);
-      
-      const response = await fetch(`/api/livros/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pagina_atual: parseInt(pagina_atual) || 0,
-          estado: book.estado
-        })
-      });
-      
-      if (response.ok) {
-        await loadBooks();
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar página:', error);
+      console.error('Erro ao atualizar livro:', error);
     }
   };
 
@@ -175,36 +157,31 @@ export default function Home() {
     if (!confirm('Tem certeza que deseja remover este livro?')) return;
     
     try {
-      const response = await fetch(`/api/livros/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        await loadBooks();
-      }
+      const response = await fetch(`/api/livros/${id}`, { method: 'DELETE' });
+      if (response.ok) await loadBooks();
     } catch (error) {
       console.error('Erro ao remover livro:', error);
     }
   };
 
-  const getStatusColor = (estado) => {
-    switch(estado) {
-      case 'lendo': return 'bg-blue-100 text-blue-800';
-      case 'lido': return 'bg-green-100 text-green-800';
-      case 'abandonado': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  // ==================== HELPER FUNCTIONS ====================
+  const getCategories = () => {
+    const categories = books
+      .map(book => book.genero)
+      .filter(genero => genero && genero.trim() !== '');
+    return ['todas', ...new Set(categories)];
   };
 
-  const getStatusLabel = (estado) => {
-    switch(estado) {
-      case 'lendo': return 'Lendo';
-      case 'lido': return 'Lido';
-      case 'abandonado': return 'Abandonado';
-      default: return estado;
-    }
-  };
+  const filteredBooks = books.filter(book => {
+    const matchesCategory = selectedCategory === 'todas' || book.genero === selectedCategory;
+    const matchesStatus = selectedStatus === 'todos' || book.estado === selectedStatus;
+    return matchesCategory && matchesStatus;
+  });
 
+  const countByStatus = (status) => books.filter(b => b.estado === status).length;
+  const countByCategory = (category) => books.filter(b => b.genero === category).length;
+
+  // ==================== RENDER ====================
   if (isLoading) {
     return (
       <Container>
@@ -215,8 +192,11 @@ export default function Home() {
     );
   }
 
+  const categories = getCategories();
+
   return (
     <Container>
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Minha Biblioteca</h2>
         <button 
@@ -226,7 +206,72 @@ export default function Home() {
           + Adicionar Livro
         </button>
       </div>
-      
+
+      {/* Filtros */}
+      {books.length > 0 && (
+        <>
+          {/* Filtro por Categoria */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filtrar por categoria:
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {categories.map(category => (
+                <FilterButton
+                  key={category}
+                  active={selectedCategory === category}
+                  onClick={() => setSelectedCategory(category)}
+                  colorClass="bg-blue-600 text-white"
+                >
+                  {category === 'todas' ? 'Todas' : category}
+                  {category !== 'todas' && (
+                    <span className="ml-2 text-xs opacity-75">
+                      ({countByCategory(category)})
+                    </span>
+                  )}
+                </FilterButton>
+              ))}
+            </div>
+          </div>
+
+          {/* Filtro por Status */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filtrar por status:
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <FilterButton
+                active={selectedStatus === 'todos'}
+                onClick={() => setSelectedStatus('todos')}
+                colorClass="bg-purple-600 text-white"
+              >
+                Todos
+              </FilterButton>
+              
+              {Object.entries(STATUS_CONFIG).map(([status, config]) => (
+                <FilterButton
+                  key={status}
+                  active={selectedStatus === status}
+                  onClick={() => setSelectedStatus(status)}
+                  colorClass={config.activeColor}
+                >
+                  {config.label}
+                  <span className="ml-2 text-xs opacity-75">
+                    ({countByStatus(status)})
+                  </span>
+                </FilterButton>
+              ))}
+            </div>
+          </div>
+
+          {/* Contador */}
+          <div className="mb-4 text-sm text-gray-600">
+            Mostrando {filteredBooks.length} de {books.length} livros
+          </div>
+        </>
+      )}
+
+      {/* Lista de Livros */}
       {books.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
           <p className="text-gray-500 mb-4">Sua biblioteca está vazia</p>
@@ -237,23 +282,50 @@ export default function Home() {
             Adicionar primeiro livro
           </button>
         </div>
+      ) : filteredBooks.length === 0 ? (
+        <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+          <p className="text-gray-500 mb-4">Nenhum livro encontrado com estes filtros</p>
+          <div className="flex gap-2 justify-center">
+            {selectedCategory !== 'todas' && (
+              <button 
+                onClick={() => setSelectedCategory('todas')}
+                className="text-blue-600 hover:underline"
+              >
+                Limpar filtro de categoria
+              </button>
+            )}
+            {selectedStatus !== 'todos' && (
+              <button 
+                onClick={() => setSelectedStatus('todos')}
+                className="text-blue-600 hover:underline"
+              >
+                Limpar filtro de status
+              </button>
+            )}
+          </div>
+        </div>
       ) : (
         <Grid>
-          {books.map(book => (
+          {filteredBooks.map(book => (
             <Card key={book.id} className="flex flex-col">
+              {/* Info do Livro */}
               <div className="flex gap-3 mb-3">
                 {book.capa_url && (
                   <img src={book.capa_url} alt={book.titulo} className="w-16 h-24 object-cover rounded" />
                 )}
                 <div className="flex-1">
                   <strong className="text-lg block mb-1">{book.titulo}</strong>
-                  <div className="text-sm text-gray-600 mb-2">{book.autor}</div>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getStatusColor(book.estado)}`}>
-                    {getStatusLabel(book.estado)}
+                  <div className="text-sm text-gray-600 mb-1">{book.autor}</div>
+                  {book.genero && (
+                    <div className="text-xs text-gray-500 mb-2">📚 {book.genero}</div>
+                  )}
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${STATUS_CONFIG[book.estado]?.color || 'bg-gray-100 text-gray-800'}`}>
+                    {STATUS_CONFIG[book.estado]?.label || book.estado}
                   </span>
                 </div>
               </div>
               
+              {/* Controles */}
               <div className="mt-auto space-y-3">
                 <div>
                   <label className="text-sm text-gray-600 block mb-1">
@@ -264,7 +336,7 @@ export default function Home() {
                     min="0"
                     max={book.paginas || undefined}
                     value={book.pagina_atual}
-                    onChange={(e) => updateBookPage(book.id, e.target.value)}
+                    onChange={(e) => updateBook(book.id, { pagina_atual: parseInt(e.target.value) || 0 })}
                     className="w-full border border-gray-300 rounded px-3 py-1 text-sm"
                   />
                 </div>
@@ -273,12 +345,12 @@ export default function Home() {
                   <label className="text-sm text-gray-600 block mb-1">Status:</label>
                   <select 
                     value={book.estado}
-                    onChange={(e) => updateBookStatus(book.id, e.target.value)}
+                    onChange={(e) => updateBook(book.id, { estado: e.target.value })}
                     className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
                   >
-                    <option value="lendo">Lendo</option>
-                    <option value="lido">Lido</option>
-                    <option value="abandonado">Abandonado</option>
+                    {Object.entries(STATUS_CONFIG).map(([status, config]) => (
+                      <option key={status} value={status}>{config.label}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -294,6 +366,7 @@ export default function Home() {
         </Grid>
       )}
 
+      {/* Modal de Busca */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div className="space-y-4">
           <div className="flex gap-2">
@@ -326,9 +399,14 @@ export default function Home() {
                 )}
                 <div className="flex-1">
                   <strong className="block mb-1">{book.volumeInfo.title}</strong>
-                  <div className="text-sm text-gray-600 mb-2">
+                  <div className="text-sm text-gray-600 mb-1">
                     {book.volumeInfo.authors?.join(', ') || 'Autor desconhecido'}
                   </div>
+                  {book.volumeInfo.categories && (
+                    <div className="text-xs text-gray-500 mb-1">
+                      📚 {book.volumeInfo.categories[0]}
+                    </div>
+                  )}
                   {book.volumeInfo.pageCount && (
                     <div className="text-xs text-gray-500 mb-2">
                       {book.volumeInfo.pageCount} páginas
