@@ -9,9 +9,9 @@ let prisma = null;
 try {
   const { prisma: prismaClient } = require('@/app/lib/prisma');
   prisma = prismaClient;
-  console.log('✅ Prisma conectado com sucesso');
+  console.log('Prisma conectado com sucesso');
 } catch (error) {
-  console.warn('⚠️ Prisma não disponível, usando armazenamento em memória');
+  console.warn('Prisma não disponível, usando armazenamento em memória');
   console.error('Erro do Prisma:', error.message);
 }
 

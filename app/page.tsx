@@ -68,10 +68,10 @@ function Container({ children }: ContainerProps) {
 
 function Grid({ children }: ContainerProps) {
   return (
-    <div style={{ 
-      display: 'grid', 
+    <div style={{
+      display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-      gap: '16px' 
+      gap: '16px'
     }}>
       {children}
     </div>
@@ -80,9 +80,9 @@ function Grid({ children }: ContainerProps) {
 
 function Card({ children }: ContainerProps) {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   return (
-    <div 
+    <div
       style={{
         backgroundColor: 'white',
         border: '1px solid #e5e7eb',
@@ -101,7 +101,7 @@ function Card({ children }: ContainerProps) {
 
 function Modal({ isOpen, onClose, children }: ModalProps) {
   if (!isOpen) return null;
-  
+
   return (
     <div style={{
       position: 'fixed',
@@ -161,7 +161,7 @@ function FilterButton({ active, onClick, children, activeColor }: FilterButtonPr
     backgroundColor: active ? activeColor : '#e5e7eb',
     color: active ? 'white' : '#374151'
   };
-  
+
   return (
     <button onClick={onClick} style={baseStyle}>
       {children}
@@ -171,27 +171,27 @@ function FilterButton({ active, onClick, children, activeColor }: FilterButtonPr
 
 // ==================== CONSTANTES ====================
 const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
-  pretendo_ler: { 
-    label: 'Pretendo Ler', 
-    bgColor: '#fef3c7', 
+  pretendo_ler: {
+    label: 'Pretendo Ler',
+    bgColor: '#fef3c7',
     textColor: '#92400e',
     activeColor: '#eab308'
   },
-  lendo: { 
-    label: 'Lendo', 
-    bgColor: '#1e40af', 
+  lendo: {
+    label: 'Lendo',
+    bgColor: '#1e40af',
     textColor: 'white',
     activeColor: '#2563eb'
   },
-  lido: { 
-    label: 'Lido', 
-    bgColor: '#22c55e', 
+  lido: {
+    label: 'Lido',
+    bgColor: '#22c55e',
     textColor: 'black',
     activeColor: '#16a34a'
   },
-  abandonado: { 
-    label: 'Abandonado', 
-    bgColor: '#ef4444', 
+  abandonado: {
+    label: 'Abandonado',
+    bgColor: '#ef4444',
     textColor: 'white',
     activeColor: '#dc2626'
   }
@@ -210,17 +210,17 @@ export default function Home() {
 
   useEffect(() => { loadBooks(); }, []);
 
-  // ==================== API FUNCTIONS ====================
+  // ==================== APIs ====================
   const loadBooks = async () => {
     try {
       const response = await fetch('/api/livros');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
+
       const contentType = response.headers.get("content-type");
       if (!contentType?.includes("application/json")) {
         throw new Error('Resposta da API não é JSON');
       }
-      
+
       const data = await response.json();
       setBooks(data);
     } catch (error) {
@@ -233,7 +233,7 @@ export default function Home() {
 
   const searchBooks = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsSearching(true);
     try {
       const response = await fetch(
@@ -263,15 +263,15 @@ export default function Home() {
         estado: 'pretendo_ler' as StatusType,
         pagina_atual: 0
       };
-      
+
       const response = await fetch('/api/livros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBook)
       });
-      
+
       if (!response.ok) throw new Error(`Erro ao adicionar livro: ${response.status}`);
-      
+
       await loadBooks();
       setIsModalOpen(false);
       setSearchQuery('');
@@ -286,13 +286,13 @@ export default function Home() {
     try {
       const book = books.find(b => b.id === id);
       if (!book) return;
-      
+
       const response = await fetch(`/api/livros/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...book, ...updates })
       });
-      
+
       if (response.ok) await loadBooks();
     } catch (error) {
       console.error('Erro ao atualizar livro:', error);
@@ -301,7 +301,7 @@ export default function Home() {
 
   const removeBook = async (id: number) => {
     if (!confirm('Tem certeza que deseja remover este livro?')) return;
-    
+
     try {
       const response = await fetch(`/api/livros/${id}`, { method: 'DELETE' });
       if (response.ok) await loadBooks();
@@ -324,10 +324,10 @@ export default function Home() {
     return matchesCategory && matchesStatus;
   });
 
-  const countByStatus = (status: StatusType): number => 
+  const countByStatus = (status: StatusType): number =>
     books.filter(b => b.estado === status).length;
-  
-  const countByCategory = (category: string): number => 
+
+  const countByCategory = (category: string): number =>
     books.filter(b => b.genero === category).length;
 
   // ==================== RENDER ====================
@@ -346,14 +346,14 @@ export default function Home() {
   return (
     <Container>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '24px' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px'
       }}>
         <h2 style={{ fontSize: '30px', fontWeight: 'bold' }}>Minha Biblioteca</h2>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
           style={{
             backgroundColor: '#2563eb',
@@ -376,9 +376,9 @@ export default function Home() {
         <>
           {/* Filtro por Categoria */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ 
-              display: 'block', 
-              fontSize: '14px', 
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
               fontWeight: '500',
               color: '#374151',
               marginBottom: '8px'
@@ -406,9 +406,9 @@ export default function Home() {
 
           {/* Filtro por Status */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ 
-              display: 'block', 
-              fontSize: '14px', 
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
               fontWeight: '500',
               color: '#374151',
               marginBottom: '8px'
@@ -423,7 +423,7 @@ export default function Home() {
               >
                 Todos
               </FilterButton>
-              
+
               {(Object.entries(STATUS_CONFIG) as [StatusType, StatusConfig][]).map(([status, config]) => (
                 <FilterButton
                   key={status}
@@ -456,7 +456,7 @@ export default function Home() {
           borderRadius: '8px'
         }}>
           <p style={{ color: '#6b7280', marginBottom: '16px' }}>Sua biblioteca está vazia</p>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             style={{
               backgroundColor: '#2563eb',
@@ -480,7 +480,7 @@ export default function Home() {
           <p style={{ color: '#6b7280', marginBottom: '16px' }}>Nenhum livro encontrado com estes filtros</p>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
             {selectedCategory !== 'todas' && (
-              <button 
+              <button
                 onClick={() => setSelectedCategory('todas')}
                 style={{
                   color: '#2563eb',
@@ -494,7 +494,7 @@ export default function Home() {
               </button>
             )}
             {selectedStatus !== 'todos' && (
-              <button 
+              <button
                 onClick={() => setSelectedStatus('todos')}
                 style={{
                   color: '#2563eb',
@@ -516,15 +516,15 @@ export default function Home() {
               {/* Info do Livro */}
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
                 {book.capa_url && (
-                  <img 
-                    src={book.capa_url} 
-                    alt={book.titulo} 
-                    style={{ 
-                      width: '64px', 
-                      height: '96px', 
-                      objectFit: 'cover', 
-                      borderRadius: '4px' 
-                    }} 
+                  <img
+                    src={book.capa_url}
+                    alt={book.titulo}
+                    style={{
+                      width: '64px',
+                      height: '96px',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
                   />
                 )}
                 <div style={{ flex: 1 }}>
@@ -552,20 +552,20 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-              
+
               {/* Controles */}
               <div style={{ marginTop: 'auto' }}>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ 
-                    fontSize: '14px', 
-                    color: '#4b5563', 
-                    display: 'block', 
-                    marginBottom: '4px' 
+                  <label style={{
+                    fontSize: '14px',
+                    color: '#4b5563',
+                    display: 'block',
+                    marginBottom: '4px'
                   }}>
                     Página atual: {book.paginas && `(de ${book.paginas})`}
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min="0"
                     max={book.paginas || undefined}
                     value={book.pagina_atual}
@@ -579,17 +579,17 @@ export default function Home() {
                     }}
                   />
                 </div>
-                
+
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ 
-                    fontSize: '14px', 
-                    color: '#4b5563', 
-                    display: 'block', 
-                    marginBottom: '4px' 
+                  <label style={{
+                    fontSize: '14px',
+                    color: '#4b5563',
+                    display: 'block',
+                    marginBottom: '4px'
                   }}>
                     Status:
                   </label>
-                  <select 
+                  <select
                     value={book.estado}
                     onChange={(e) => updateBook(book.id, { estado: e.target.value as StatusType })}
                     style={{
@@ -634,8 +634,8 @@ export default function Home() {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Buscar livro pelo título, autor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -647,7 +647,7 @@ export default function Home() {
                 padding: '8px 16px'
               }}
             />
-            <button 
+            <button
               onClick={searchBooks}
               disabled={isSearching}
               style={{
@@ -665,8 +665,8 @@ export default function Home() {
 
           <div style={{ maxHeight: '384px', overflowY: 'auto' }}>
             {searchResults.map(book => (
-              <div 
-                key={book.id} 
+              <div
+                key={book.id}
                 style={{
                   border: '1px solid #e5e7eb',
                   borderRadius: '4px',
@@ -680,8 +680,8 @@ export default function Home() {
                 onMouseLeave={(e) => (e.currentTarget as HTMLDivElement).style.backgroundColor = 'white'}
               >
                 {book.volumeInfo.imageLinks?.thumbnail && (
-                  <img 
-                    src={book.volumeInfo.imageLinks.thumbnail} 
+                  <img
+                    src={book.volumeInfo.imageLinks.thumbnail}
                     alt={book.volumeInfo.title}
                     style={{
                       width: '64px',
@@ -708,7 +708,7 @@ export default function Home() {
                       {book.volumeInfo.pageCount} páginas
                     </div>
                   )}
-                  <button 
+                  <button
                     onClick={() => addBook(book)}
                     style={{
                       backgroundColor: '#16a34a',
@@ -725,7 +725,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            
+
             {searchResults.length === 0 && searchQuery && !isSearching && (
               <p style={{ textAlign: 'center', color: '#6b7280', padding: '32px 0' }}>
                 Nenhum livro encontrado. Tente outra busca.
