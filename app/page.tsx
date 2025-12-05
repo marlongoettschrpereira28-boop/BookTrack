@@ -1,8 +1,64 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode, CSSProperties } from 'react';
 
-//COMPONENTES
-function Container({ children }) {
+// ==================== INTERFACES E TIPOS ====================
+interface Book {
+  id: number;
+  titulo: string;
+  autor: string;
+  isbn?: string | null;
+  paginas?: number | null;
+  genero?: string | null;
+  capa_url?: string | null;
+  descricao?: string | null;
+  pagina_atual: number;
+  estado: StatusType;
+  data_adicao?: string;
+}
+
+type StatusType = 'pretendo_ler' | 'lendo' | 'lido' | 'abandonado';
+
+interface StatusConfig {
+  label: string;
+  bgColor: string;
+  textColor: string;
+  activeColor: string;
+}
+
+interface VolumeInfo {
+  title: string;
+  authors?: string[];
+  industryIdentifiers?: { identifier: string }[];
+  pageCount?: number;
+  categories?: string[];
+  imageLinks?: { thumbnail: string };
+  description?: string;
+}
+
+interface GoogleBook {
+  id: string;
+  volumeInfo: VolumeInfo;
+}
+
+interface ContainerProps {
+  children: ReactNode;
+}
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+interface FilterButtonProps {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  activeColor: string;
+}
+
+// ==================== COMPONENTES ====================
+function Container({ children }: ContainerProps) {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
       {children}
@@ -10,7 +66,7 @@ function Container({ children }) {
   );
 }
 
-function Grid({ children }) {
+function Grid({ children }: ContainerProps) {
   return (
     <div style={{ 
       display: 'grid', 
@@ -22,25 +78,28 @@ function Grid({ children }) {
   );
 }
 
-function Card({ children, className = "" }) {
+function Card({ children }: ContainerProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   return (
-    <div style={{
-      backgroundColor: 'white',
-      border: '1px solid #e5e7eb',
-      borderRadius: '8px',
-      padding: '16px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-      transition: 'box-shadow 0.2s'
-    }}
-    onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'}
-    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'}
-    className={className}>
+    <div 
+      style={{
+        backgroundColor: 'white',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        padding: '16px',
+        boxShadow: isHovered ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
+        transition: 'box-shadow 0.2s'
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {children}
     </div>
   );
 }
 
-function Modal({ isOpen, onClose, children }) {
+function Modal({ isOpen, onClose, children }: ModalProps) {
   if (!isOpen) return null;
   
   return (
@@ -90,8 +149,8 @@ function Modal({ isOpen, onClose, children }) {
   );
 }
 
-function FilterButton({ active, onClick, children, activeColor }) {
-  const baseStyle = {
+function FilterButton({ active, onClick, children, activeColor }: FilterButtonProps) {
+  const baseStyle: CSSProperties = {
     padding: '8px 16px',
     borderRadius: '8px',
     fontSize: '14px',
@@ -110,8 +169,8 @@ function FilterButton({ active, onClick, children, activeColor }) {
   );
 }
 
-//CONSTANTES
-const STATUS_CONFIG = {
+// ==================== CONSTANTES ====================
+const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
   pretendo_ler: { 
     label: 'Pretendo Ler', 
     bgColor: '#fef3c7', 
@@ -138,20 +197,20 @@ const STATUS_CONFIG = {
   }
 };
 
-//COMPONENTE PRINCIPAL
+// ==================== COMPONENTE PRINCIPAL ====================
 export default function Home() {
-  const [books, setBooks] = useState([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<GoogleBook[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('todas');
-  const [selectedStatus, setSelectedStatus] = useState('todos');
+  const [selectedStatus, setSelectedStatus] = useState<'todos' | StatusType>('todos');
 
   useEffect(() => { loadBooks(); }, []);
 
-  //APIs
+  // ==================== API FUNCTIONS ====================
   const loadBooks = async () => {
     try {
       const response = await fetch('/api/livros');
@@ -190,7 +249,7 @@ export default function Home() {
     }
   };
 
-  const addBook = async (bookData) => {
+  const addBook = async (bookData: GoogleBook) => {
     try {
       const volumeInfo = bookData.volumeInfo;
       const newBook = {
@@ -201,7 +260,7 @@ export default function Home() {
         genero: volumeInfo.categories?.[0] || null,
         capa_url: volumeInfo.imageLinks?.thumbnail || null,
         descricao: volumeInfo.description || null,
-        estado: 'pretendo_ler',
+        estado: 'pretendo_ler' as StatusType,
         pagina_atual: 0
       };
       
@@ -223,9 +282,11 @@ export default function Home() {
     }
   };
 
-  const updateBook = async (id, updates) => {
+  const updateBook = async (id: number, updates: Partial<Book>) => {
     try {
       const book = books.find(b => b.id === id);
+      if (!book) return;
+      
       const response = await fetch(`/api/livros/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -238,7 +299,7 @@ export default function Home() {
     }
   };
 
-  const removeBook = async (id) => {
+  const removeBook = async (id: number) => {
     if (!confirm('Tem certeza que deseja remover este livro?')) return;
     
     try {
@@ -249,11 +310,11 @@ export default function Home() {
     }
   };
 
-  //filtros
-  const getCategories = () => {
+  // ==================== FILTROS ====================
+  const getCategories = (): string[] => {
     const categories = books
       .map(book => book.genero)
-      .filter(genero => genero && genero.trim() !== '');
+      .filter((genero): genero is string => !!genero && genero.trim() !== '');
     return ['todas', ...new Set(categories)];
   };
 
@@ -263,10 +324,13 @@ export default function Home() {
     return matchesCategory && matchesStatus;
   });
 
-  const countByStatus = (status) => books.filter(b => b.estado === status).length;
-  const countByCategory = (category) => books.filter(b => b.genero === category).length;
+  const countByStatus = (status: StatusType): number => 
+    books.filter(b => b.estado === status).length;
+  
+  const countByCategory = (category: string): number => 
+    books.filter(b => b.genero === category).length;
 
-  // RENDER 
+  // ==================== RENDER ====================
   if (isLoading) {
     return (
       <Container>
@@ -300,8 +364,8 @@ export default function Home() {
             cursor: 'pointer',
             transition: 'background-color 0.2s'
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#2563eb'}
+          onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1d4ed8'}
+          onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'}
         >
           + Adicionar Livro
         </button>
@@ -360,7 +424,7 @@ export default function Home() {
                 Todos
               </FilterButton>
               
-              {Object.entries(STATUS_CONFIG).map(([status, config]) => (
+              {(Object.entries(STATUS_CONFIG) as [StatusType, StatusConfig][]).map(([status, config]) => (
                 <FilterButton
                   key={status}
                   active={selectedStatus === status}
@@ -527,7 +591,7 @@ export default function Home() {
                   </label>
                   <select 
                     value={book.estado}
-                    onChange={(e) => updateBook(book.id, { estado: e.target.value })}
+                    onChange={(e) => updateBook(book.id, { estado: e.target.value as StatusType })}
                     style={{
                       width: '100%',
                       border: '1px solid #d1d5db',
@@ -536,7 +600,7 @@ export default function Home() {
                       fontSize: '14px'
                     }}
                   >
-                    {Object.entries(STATUS_CONFIG).map(([status, config]) => (
+                    {(Object.entries(STATUS_CONFIG) as [StatusType, StatusConfig][]).map(([status, config]) => (
                       <option key={status} value={status}>{config.label}</option>
                     ))}
                   </select>
@@ -555,8 +619,8 @@ export default function Home() {
                     cursor: 'pointer',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#fef2f2'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#fef2f2'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = 'white'}
                 >
                   Remover
                 </button>
@@ -612,8 +676,8 @@ export default function Home() {
                   marginBottom: '12px',
                   transition: 'background-color 0.2s'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseEnter={(e) => (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f9fafb'}
+                onMouseLeave={(e) => (e.currentTarget as HTMLDivElement).style.backgroundColor = 'white'}
               >
                 {book.volumeInfo.imageLinks?.thumbnail && (
                   <img 
