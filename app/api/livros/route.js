@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 
+// Armazenamento temporário em memória (apenas para desenvolvimento)
+let livrosMemoria = [];
+let nextId = 1;
 
 // Tenta importar Prisma, mas continua se falhar
 let prisma = null;
 try {
   const { prisma: prismaClient } = require('@/app/lib/prisma');
   prisma = prismaClient;
-  console.log('Prisma conectado com sucesso');
+  console.log('✅ Prisma conectado com sucesso');
 } catch (error) {
-  console.warn('Prisma não disponível, usando armazenamento em memória');
+  console.warn('⚠️ Prisma não disponível, usando armazenamento em memória');
   console.error('Erro do Prisma:', error.message);
 }
 

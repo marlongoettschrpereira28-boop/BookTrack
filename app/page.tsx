@@ -1,39 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react';
 
-//TIPOS
-interface Book {
-  id: number;
-  titulo: string;
-  autor: string;
-  isbn?: string | null;
-  paginas?: number | null;
-  genero?: string | null;
-  capa_url?: string | null;
-  descricao?: string | null;
-  estado: 'pretendo_ler' | 'lendo' | 'lido' | 'abandonado';
-  pagina_atual: number;
-}
-
-interface GoogleBook {
-  id: string;
-  volumeInfo: {
-    title: string;
-    authors?: string[];
-    industryIdentifiers?: Array<{ identifier: string }>;
-    pageCount?: number;
-    categories?: string[];
-    imageLinks?: { thumbnail: string };
-    description?: string;
-  };
-}
-
 //COMPONENTES
-interface ContainerProps {
-  children: React.ReactNode;
-}
-
-function Container({ children }: ContainerProps) {
+function Container({ children }) {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
       {children}
@@ -41,28 +10,19 @@ function Container({ children }: ContainerProps) {
   );
 }
 
-interface GridProps {
-  children: React.ReactNode;
-}
-
-function Grid({ children }: GridProps) {
+function Grid({ children }) {
   return (
-    <div style={{
-      display: 'grid',
+    <div style={{ 
+      display: 'grid', 
       gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-      gap: '16px'
+      gap: '16px' 
     }}>
       {children}
     </div>
   );
 }
 
-interface CardProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function Card({ children, className = "" }: CardProps) {
+function Card({ children, className = "" }) {
   return (
     <div style={{
       backgroundColor: 'white',
@@ -72,23 +32,17 @@ function Card({ children, className = "" }: CardProps) {
       boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
       transition: 'box-shadow 0.2s'
     }}
-      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'}
-      onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'}
-      className={className}>
+    onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'}
+    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'}
+    className={className}>
       {children}
     </div>
   );
 }
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}
-
-function Modal({ isOpen, onClose, children }: ModalProps) {
+function Modal({ isOpen, onClose, children }) {
   if (!isOpen) return null;
-
+  
   return (
     <div style={{
       position: 'fixed',
@@ -136,14 +90,7 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
   );
 }
 
-interface FilterButtonProps {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  activeColor: string;
-}
-
-function FilterButton({ active, onClick, children, activeColor }: FilterButtonProps) {
+function FilterButton({ active, onClick, children, activeColor }) {
   const baseStyle = {
     padding: '8px 16px',
     borderRadius: '8px',
@@ -155,7 +102,7 @@ function FilterButton({ active, onClick, children, activeColor }: FilterButtonPr
     backgroundColor: active ? activeColor : '#e5e7eb',
     color: active ? 'white' : '#374151'
   };
-
+  
   return (
     <button onClick={onClick} style={baseStyle}>
       {children}
@@ -165,27 +112,27 @@ function FilterButton({ active, onClick, children, activeColor }: FilterButtonPr
 
 //CONSTANTES
 const STATUS_CONFIG = {
-  pretendo_ler: {
-    label: 'Pretendo Ler',
-    bgColor: '#fef3c7',
+  pretendo_ler: { 
+    label: 'Pretendo Ler', 
+    bgColor: '#fef3c7', 
     textColor: '#92400e',
     activeColor: '#eab308'
   },
-  lendo: {
-    label: 'Lendo',
-    bgColor: '#1e40af',
+  lendo: { 
+    label: 'Lendo', 
+    bgColor: '#1e40af', 
     textColor: 'white',
     activeColor: '#2563eb'
   },
-  lido: {
-    label: 'Lido',
-    bgColor: '#22c55e',
+  lido: { 
+    label: 'Lido', 
+    bgColor: '#22c55e', 
     textColor: 'black',
     activeColor: '#16a34a'
   },
-  abandonado: {
-    label: 'Abandonado',
-    bgColor: '#ef4444',
+  abandonado: { 
+    label: 'Abandonado', 
+    bgColor: '#ef4444', 
     textColor: 'white',
     activeColor: '#dc2626'
   }
@@ -193,14 +140,14 @@ const STATUS_CONFIG = {
 
 //COMPONENTE PRINCIPAL
 export default function Home() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<GoogleBook[]>([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('todas');
-  const [selectedStatus, setSelectedStatus] = useState<string>('todos');
+  const [selectedCategory, setSelectedCategory] = useState('todas');
+  const [selectedStatus, setSelectedStatus] = useState('todos');
 
   useEffect(() => { loadBooks(); }, []);
 
@@ -209,12 +156,12 @@ export default function Home() {
     try {
       const response = await fetch('/api/livros');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
+      
       const contentType = response.headers.get("content-type");
       if (!contentType?.includes("application/json")) {
         throw new Error('Resposta da API não é JSON');
       }
-
+      
       const data = await response.json();
       setBooks(data);
     } catch (error) {
@@ -227,7 +174,7 @@ export default function Home() {
 
   const searchBooks = async () => {
     if (!searchQuery.trim()) return;
-
+    
     setIsSearching(true);
     try {
       const response = await fetch(
@@ -243,7 +190,7 @@ export default function Home() {
     }
   };
 
-  const addBook = async (bookData: GoogleBook) => {
+  const addBook = async (bookData) => {
     try {
       const volumeInfo = bookData.volumeInfo;
       const newBook = {
@@ -257,15 +204,15 @@ export default function Home() {
         estado: 'pretendo_ler',
         pagina_atual: 0
       };
-
+      
       const response = await fetch('/api/livros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBook)
       });
-
+      
       if (!response.ok) throw new Error(`Erro ao adicionar livro: ${response.status}`);
-
+      
       await loadBooks();
       setIsModalOpen(false);
       setSearchQuery('');
@@ -276,7 +223,7 @@ export default function Home() {
     }
   };
 
-  const updateBook = async (id: number, updates: Partial<Book>) => {
+  const updateBook = async (id, updates) => {
     try {
       const book = books.find(b => b.id === id);
       const response = await fetch(`/api/livros/${id}`, {
@@ -284,16 +231,16 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...book, ...updates })
       });
-
+      
       if (response.ok) await loadBooks();
     } catch (error) {
       console.error('Erro ao atualizar livro:', error);
     }
   };
 
-  const removeBook = async (id: number) => {
+  const removeBook = async (id) => {
     if (!confirm('Tem certeza que deseja remover este livro?')) return;
-
+    
     try {
       const response = await fetch(`/api/livros/${id}`, { method: 'DELETE' });
       if (response.ok) await loadBooks();
@@ -302,11 +249,11 @@ export default function Home() {
     }
   };
 
-  //HELPER
+  //filtros
   const getCategories = () => {
     const categories = books
       .map(book => book.genero)
-      .filter((genero): genero is string => genero !== null && genero !== undefined && genero.trim() !== '');
+      .filter(genero => genero && genero.trim() !== '');
     return ['todas', ...new Set(categories)];
   };
 
@@ -316,10 +263,10 @@ export default function Home() {
     return matchesCategory && matchesStatus;
   });
 
-  const countByStatus = (status: string) => books.filter(b => b.estado === status).length;
-  const countByCategory = (category: string) => books.filter(b => b.genero === category).length;
+  const countByStatus = (status) => books.filter(b => b.estado === status).length;
+  const countByCategory = (category) => books.filter(b => b.genero === category).length;
 
-  //RENDER
+  // RENDER 
   if (isLoading) {
     return (
       <Container>
@@ -335,14 +282,14 @@ export default function Home() {
   return (
     <Container>
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px'
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px' 
       }}>
         <h2 style={{ fontSize: '30px', fontWeight: 'bold' }}>Minha Biblioteca</h2>
-        <button
+        <button 
           onClick={() => setIsModalOpen(true)}
           style={{
             backgroundColor: '#2563eb',
@@ -353,8 +300,8 @@ export default function Home() {
             cursor: 'pointer',
             transition: 'background-color 0.2s'
           }}
-          onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1d4ed8'}
-          onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#2563eb'}
         >
           + Adicionar Livro
         </button>
@@ -365,9 +312,9 @@ export default function Home() {
         <>
           {/* Filtro por Categoria */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
+            <label style={{ 
+              display: 'block', 
+              fontSize: '14px', 
               fontWeight: '500',
               color: '#374151',
               marginBottom: '8px'
@@ -395,9 +342,9 @@ export default function Home() {
 
           {/* Filtro por Status */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
+            <label style={{ 
+              display: 'block', 
+              fontSize: '14px', 
               fontWeight: '500',
               color: '#374151',
               marginBottom: '8px'
@@ -412,7 +359,7 @@ export default function Home() {
               >
                 Todos
               </FilterButton>
-
+              
               {Object.entries(STATUS_CONFIG).map(([status, config]) => (
                 <FilterButton
                   key={status}
@@ -445,7 +392,7 @@ export default function Home() {
           borderRadius: '8px'
         }}>
           <p style={{ color: '#6b7280', marginBottom: '16px' }}>Sua biblioteca está vazia</p>
-          <button
+          <button 
             onClick={() => setIsModalOpen(true)}
             style={{
               backgroundColor: '#2563eb',
@@ -469,7 +416,7 @@ export default function Home() {
           <p style={{ color: '#6b7280', marginBottom: '16px' }}>Nenhum livro encontrado com estes filtros</p>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
             {selectedCategory !== 'todas' && (
-              <button
+              <button 
                 onClick={() => setSelectedCategory('todas')}
                 style={{
                   color: '#2563eb',
@@ -483,7 +430,7 @@ export default function Home() {
               </button>
             )}
             {selectedStatus !== 'todos' && (
-              <button
+              <button 
                 onClick={() => setSelectedStatus('todos')}
                 style={{
                   color: '#2563eb',
@@ -505,15 +452,15 @@ export default function Home() {
               {/* Info do Livro */}
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
                 {book.capa_url && (
-                  <img
-                    src={book.capa_url}
-                    alt={book.titulo}
-                    style={{
-                      width: '64px',
-                      height: '96px',
-                      objectFit: 'cover',
-                      borderRadius: '4px'
-                    }}
+                  <img 
+                    src={book.capa_url} 
+                    alt={book.titulo} 
+                    style={{ 
+                      width: '64px', 
+                      height: '96px', 
+                      objectFit: 'cover', 
+                      borderRadius: '4px' 
+                    }} 
                   />
                 )}
                 <div style={{ flex: 1 }}>
@@ -541,20 +488,20 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-
+              
               {/* Controles */}
               <div style={{ marginTop: 'auto' }}>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{
-                    fontSize: '14px',
-                    color: '#4b5563',
-                    display: 'block',
-                    marginBottom: '4px'
+                  <label style={{ 
+                    fontSize: '14px', 
+                    color: '#4b5563', 
+                    display: 'block', 
+                    marginBottom: '4px' 
                   }}>
                     Página atual: {book.paginas && `(de ${book.paginas})`}
                   </label>
-                  <input
-                    type="number"
+                  <input 
+                    type="number" 
                     min="0"
                     max={book.paginas || undefined}
                     value={book.pagina_atual}
@@ -568,19 +515,19 @@ export default function Home() {
                     }}
                   />
                 </div>
-
+                
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{
-                    fontSize: '14px',
-                    color: '#4b5563',
-                    display: 'block',
-                    marginBottom: '4px'
+                  <label style={{ 
+                    fontSize: '14px', 
+                    color: '#4b5563', 
+                    display: 'block', 
+                    marginBottom: '4px' 
                   }}>
                     Status:
                   </label>
-                  <select
+                  <select 
                     value={book.estado}
-                    onChange={(e) => updateBook(book.id, { estado: e.target.value as 'pretendo_ler' | 'lendo' | 'lido' | 'abandonado' })}
+                    onChange={(e) => updateBook(book.id, { estado: e.target.value })}
                     style={{
                       width: '100%',
                       border: '1px solid #d1d5db',
@@ -608,8 +555,8 @@ export default function Home() {
                     cursor: 'pointer',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#fef2f2'}
-                  onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'white'}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#fef2f2'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
                 >
                   Remover
                 </button>
@@ -623,8 +570,8 @@ export default function Home() {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <input
-              type="text"
+            <input 
+              type="text" 
               placeholder="Buscar livro pelo título, autor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -636,7 +583,7 @@ export default function Home() {
                 padding: '8px 16px'
               }}
             />
-            <button
+            <button 
               onClick={searchBooks}
               disabled={isSearching}
               style={{
@@ -654,8 +601,8 @@ export default function Home() {
 
           <div style={{ maxHeight: '384px', overflowY: 'auto' }}>
             {searchResults.map(book => (
-              <div
-                key={book.id}
+              <div 
+                key={book.id} 
                 style={{
                   border: '1px solid #e5e7eb',
                   borderRadius: '4px',
@@ -669,8 +616,8 @@ export default function Home() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
               >
                 {book.volumeInfo.imageLinks?.thumbnail && (
-                  <img
-                    src={book.volumeInfo.imageLinks.thumbnail}
+                  <img 
+                    src={book.volumeInfo.imageLinks.thumbnail} 
                     alt={book.volumeInfo.title}
                     style={{
                       width: '64px',
@@ -697,7 +644,7 @@ export default function Home() {
                       {book.volumeInfo.pageCount} páginas
                     </div>
                   )}
-                  <button
+                  <button 
                     onClick={() => addBook(book)}
                     style={{
                       backgroundColor: '#16a34a',
@@ -714,7 +661,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-
+            
             {searchResults.length === 0 && searchQuery && !isSearching && (
               <p style={{ textAlign: 'center', color: '#6b7280', padding: '32px 0' }}>
                 Nenhum livro encontrado. Tente outra busca.

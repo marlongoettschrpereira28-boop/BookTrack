@@ -1,20 +1,19 @@
 import './globals.css'
-import { ReactNode } from 'react';
 
 export const metadata = {
   title: 'BookTrack',
   description: 'BookTrack - controle de leitura (MVP)',
 }
 
-export default function RootLayout({ children } : { children: ReactNode }) {
+export default function RootLayout({ children }) {
   return (
      <html lang="en">
       <body>
         <header className="app-header" role="banner">
           <div className="inner">
             <div style={{display:'flex', alignItems:'center', gap:12}}>
-              <h1 style={{margin:0, fontSize:24}}>BookTrack</h1>
-              <span className="small, color = white">Controle de leitura</span>
+              <h1 style={{margin:0, fontSize:18}}>BookTrack</h1>
+              <span className="small">controle de leitura</span>
             </div>
             <nav className="app-nav" role="navigation" aria-label="Menu principal">
               <a href="/">Biblioteca</a>
@@ -29,7 +28,7 @@ export default function RootLayout({ children } : { children: ReactNode }) {
         </main>
 
         <footer className="app-footer" role="contentinfo">
-          © {new Date().getFullYear()} BookTrack
+          © {new Date().getFullYear()} BookTrack — Dados locais (localStorage)
         </footer>
       </body>
     </html>
